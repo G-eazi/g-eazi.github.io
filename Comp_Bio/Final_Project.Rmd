@@ -1,0 +1,114 @@
+---
+title: "fin project"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+date: "2023-05-10"
+---
+#Introduction
+In populations that evolve under different environmental conditions, the experience of different selective pressures shape patterns of sequence evolution and gene expression. The difference in selective pressure manifests in genetic and phenotypic differences. Hence, this study tests for a greater and/or different parasite burdens in species from tropical latitudes when compared to temperate ones
+
+#Background
+To test this idea, we compared the transcriptomes of one tropical species (Heteromys desmarestianus) and two species from temperate latitudes (Dipodomys spectabilis and Chaetodipus baileyi) from the Heteromyidae. We did so in a search for positive selection on sequences and/or differential expression, while controlling for phylogenetic history in our choice of species. This is done using spleen tissue. 
+
+#Biological hypothesis
+The tropical species is exposed to greater parasitic burden as a result they would have greater difference in phenotypic difference. 
+
+#Significance
+The role of selection in driving and shaping genetic variation has long been a subject of considerable interest in
+evolutionary biology.Hence, it allows us to understand natural selection from the study of genes and the role they play inp immunity to infectious disease and/or pathogens
+
+#Materials and Methods
+RSEM< DSeq,Trinity,MUSCLE
+
+
+#Samples
+Spleen tissue from 3 different species : Perognathinae and Heteromyinae and the Dipodomyinae
+
+
+#Experimental procedure
+The total RNA was extracted from spleen samples to form a transcriptome assembly it was annotated using blast and then it was tested for differential expression.
+
+#Results
+Obtaining the volcano plot would show the statistical significance and the magnitude of difference between conditions. They are used to identify which genes are the most significant and are also changing by the most amount.
+
+```{r}
+# load library
+library(tidyverse)
+library(DESeq2)
+
+# read count data
+rna_cts <- read.csv("Marra2014_count_table_spleen.tsv", sep = "\t", row.names = "gene_id")
+rna_cts <- as.matrix(rna_cts)
+colnames(rna_cts)
+
+# create a dataframe of sample info
+col_data <- data.frame(
+  row.names=colnames(rna_cts),
+  condition=c("desert", "desert", "desert", "desert", "desert", "desert", "desert", "desert","mesic","mesic","mesic", "mesic"),
+  species=c("Dipodomys", "Dipodomys", "Dipodomys", "Dipodomys", "Chaetodipus", "Chaetodipus", "Chaetodipus", "Chaetodipus", "Heteromys", "Heteromys", "Heteromys", "Heteromys")
+)
+
+# Construct a DESeq data set
+de_obj <- DESeqDataSetFromMatrix(
+  countData = rna_cts,
+  colData = col_data,
+  design = ~ condition)
+
+# Run differential gene expression analysis
+dds <- DESeq(de_obj)
+
+# get results
+res <- results(dds)
+```
+
+
+```{r}
+#make res into dataframe
+resplot <- as.data.frame(res)
+#add column to data frame to show up,down and significance
+resplot$diffexpressed <- "NO"
+# if log2Foldchange > 0.6 and pvalue < 0.05, set as "UP"
+resplot$diffexpressed[resplot$log2FoldChange > 0.6 & resplot$pvalue < 0.05] <- "UP"
+# if log2Foldchange < -0.6 and pvalue < 0.05, set as "DOWN"
+resplot$diffexpressed[resplot$log2FoldChange < -0.6 & resplot$pvalue < 0.05] <- "DOWN"
+#make row.names into a column called gene_name
+resplot$gene_name <- row.names(resplot)
+#Make critgenes
+upgenes <- resplot %>% filter(diffexpressed == "UP") %>% arrange(pvalue) 
+downgenes <- resplot %>% filter(diffexpressed == "DOWN") %>% arrange(pvalue)
+critgenes <- rbind(upgenes, downgenes)
+#get gene names
+critgenes$gene_name
+critgenes %>% filter(diffexpressed == "DOWN") %>% head(10)
+library(EnhancedVolcano)
+matchlist <- c('mypt2' ,'f135a' ,'cers2' ,'pgap2' ,'arsk' ,'pld1' ,'sphk2'
+               ,'glcm' ,'niban' ,'armx1' ,'nu5m' ,'brox'
+               ,'m3k12','cb043','kld10','gna1','tom34','rn214','ube2f','ci123')
+#Making the Plot
+EnhancedVolcano(resplot,
+                lab = resplot$gene_name,
+                x = 'log2FoldChange',
+                y = 'pvalue',
+                xlim=c(-12,12),
+                ylim=c(0,85),
+                selectLab = matchlist, #adds labels to sig genes
+                pCutoff = 10e-14,
+                FCcutoff = 2.0,
+                pointSize = 2.0,
+                labSize = 3.0,
+                shape = c(4, 35, 17, 18),
+                colAlpha = 1,
+                legendPosition = 'right',
+                legendLabSize = 14,
+                legendIconSize = 5.0)
+
+```
+#Conclusions
+We have characterized the transcriptomes of three heteromyid rodents, identified a suite of genes that have been
+upregulated in H. desmarestianus, and identified several
+genes that exhibit preliminary evidence of positive selection. Their divergence from orthologues in temperate taxa
+could be driven by the selection pressure of elevated parasite abundance in tropical environments, be the result of
+other life history differences between these taxa, or be the
+result of stochastic processes
