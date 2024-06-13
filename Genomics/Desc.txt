@@ -1,0 +1,2 @@
+Description: We aimed to investigate whether there are significant differences in the frequency and distribution of mutations
+in the S, N, and nsp12 genes of SARS-CoV-2 isolates collected at specific dates in the USA and UK.
