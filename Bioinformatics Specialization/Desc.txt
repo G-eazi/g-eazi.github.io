@@ -1,0 +1,2 @@
+### The Bioinformatics Specialization module 1 aims to look for hidden messages in DNA, we investigate DNA replication, 
+### and ask the question, where in the genome does DNA replication begin? 
